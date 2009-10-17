@@ -159,7 +159,7 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
 			DateTime now = DateTime.UtcNow;
 			PeriodicTrigger trigger = PeriodicTrigger.CreateDailyTrigger(DateTime.UtcNow);
 
-			Assert.AreEqual(now, trigger.StartTimeUtc);
+			Assert.AreEqual(now.Ticks, trigger.StartTimeUtc.Ticks);
 			Assert.AreEqual(new TimeSpan(24, 0, 0), trigger.Period);
 			Assert.IsNull(trigger.EndTimeUtc);
 			Assert.IsNull(trigger.JobExecutionCountRemaining);
@@ -172,7 +172,7 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
 			DateTime now = DateTime.UtcNow;
 			PeriodicTrigger trigger = PeriodicTrigger.CreateOneShotTrigger(DateTime.UtcNow);
 
-			Assert.AreEqual(now, trigger.StartTimeUtc);
+			Assert.AreEqual(now.Ticks, trigger.StartTimeUtc.Ticks);
 			Assert.IsNull(trigger.Period);
 			Assert.IsNull(trigger.EndTimeUtc);
 			Assert.AreEqual(1, trigger.JobExecutionCountRemaining);
