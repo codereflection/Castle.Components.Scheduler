@@ -687,10 +687,9 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
 				Assert.IsNotNull(completedJobDetails.LastJobExecutionDetails);
 				Assert.AreEqual(scheduler.Guid, completedJobDetails.LastJobExecutionDetails.SchedulerGuid);
 				Assert.GreaterOrEqual(completedJobDetails.LastJobExecutionDetails.StartTimeUtc,
-				                        completedJobDetails.CreationTimeUtc);
+				                      completedJobDetails.CreationTimeUtc);
 				Assert.IsNotNull(completedJobDetails.LastJobExecutionDetails.EndTimeUtc);
-				Assert.GreaterOrEqual(completedJobDetails.LastJobExecutionDetails.EndTimeUtc,
-				                        completedJobDetails.LastJobExecutionDetails.StartTimeUtc);
+				Assert.GreaterOrEqual(completedJobDetails.LastJobExecutionDetails.EndTimeUtc.Value.Ticks, completedJobDetails.LastJobExecutionDetails.StartTimeUtc.Ticks);
 				Assert.AreEqual(jobSucceeds, completedJobDetails.LastJobExecutionDetails.Succeeded);
 
 				if (!jobThrows)
@@ -732,8 +731,7 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
 				Assert.GreaterOrEqual(completedJobDetails.LastJobExecutionDetails.StartTimeUtc,
 				                        completedJobDetails.CreationTimeUtc);
 				Assert.IsNotNull(completedJobDetails.LastJobExecutionDetails.EndTimeUtc);
-				Assert.GreaterOrEqual(completedJobDetails.LastJobExecutionDetails.EndTimeUtc,
-				                        completedJobDetails.LastJobExecutionDetails.StartTimeUtc);
+				Assert.GreaterOrEqual(completedJobDetails.LastJobExecutionDetails.EndTimeUtc.Value.Ticks, completedJobDetails.LastJobExecutionDetails.StartTimeUtc.Ticks);
 				Assert.AreEqual(false, completedJobDetails.LastJobExecutionDetails.Succeeded);
 				Assert.IsNull(completedJobDetails.JobSpec.JobData);
 
