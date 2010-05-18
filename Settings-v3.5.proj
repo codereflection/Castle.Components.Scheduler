@@ -29,8 +29,6 @@ limitations under the License.
       in addition to automatically detected dependencies.
       -->
       <PackageFiles Include="$(RootPath)\lib\net-35\Castle.*" />
-      <PackageFiles Include="$(RootPath)\lib\net-35\log4net.*" />
-      <PackageFiles Include="$(RootPath)\lib\net-35\NLog.*" />
     </ItemGroup>
 
 </Project>

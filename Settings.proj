@@ -44,16 +44,6 @@ limitations under the License.
 	</PropertyGroup>
 
 
-  <ItemGroup>
-			<!-- 
-			Specify additional items to package here, they are added to the package
-			in addition to automatically detected dependencies.
-			-->
-			<PackageFiles Include="$(RootPath)\lib\NHibernate*" />
-      <PackageFiles Include="$(RootPath)\lib\Iesi*" />
-      <PackageFiles Include="$(RootPath)\lib\Antlr3.Runtime.dll" />
-	</ItemGroup>
-
 	<!-- Import framework version specific settings, like Settings-v3.5 or Settings-v4.0 -->
 	<Import
 		Project="$(RootPath)\Settings-$(TargetFrameworkVersion).proj"
