@@ -7,6 +7,7 @@ src/*/obj
 src/*/bin
 *.csproj.user
 *ReSharper.user
+*TeamCity.user
 _ReSharper*
 *resharper*
 *.suo
