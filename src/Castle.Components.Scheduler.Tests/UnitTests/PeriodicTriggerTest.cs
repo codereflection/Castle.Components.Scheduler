@@ -436,12 +436,13 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
         }
 
         [TestCase("3/14/2000 03:00:00 AM", TriggerScheduleAction.ExecuteJob, 32, Description = "At the start of the fire window")]
-        [TestCase("3/14/2000 01:59:59 PM", TriggerScheduleAction.ExecuteJob, 32, Description = "At the end of the fire window")]
-        [TestCase("3/14/2000 02:59:59 AM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window")]
-        [TestCase("3/14/2000 02:00:00 PM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window")]
+        [TestCase("3/14/2000 12:59:59 PM", TriggerScheduleAction.ExecuteJob, 32, Description = "At the end of the fire window")]
+        [TestCase("3/14/2000 02:59:59 AM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window, right before start of fire window")]
+        [TestCase("3/14/2000 01:00:00 PM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window, right after end of fire window")]
         [TestCase("3/13/2000 03:00:00 AM", TriggerScheduleAction.Skip, 33, Description = "In fire window, but before starting date")]
         [TestCase("3/15/2001 03:00:00 AM", TriggerScheduleAction.Stop, 0, Description = "In fire window, but after ending date")]
-        [TestCase("3/14/2001 03:00:00 AM", TriggerScheduleAction.ExecuteJob, 32, Description = "In fire window, on final fire date")]
+        [TestCase("3/14/2001 03:00:00 AM", TriggerScheduleAction.ExecuteJob, 32, Description = "In fire window, on final fire date and start hour")]
+        [TestCase("3/14/2001 12:59:59 PM", TriggerScheduleAction.ExecuteJob, 32, Description = "In fire window, on final fire date and hour")]
         public void Schedule(string utcFireTime, TriggerScheduleAction expectedAction, int expectedRemainingJobCount)
         {
             var startDate = new DateTime(2000, 3, 14);

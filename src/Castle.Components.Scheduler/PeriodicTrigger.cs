@@ -349,20 +349,20 @@ namespace Castle.Components.Scheduler
     public class DailyFireWindow
     {
         /// <summary>
-        /// Start hour for the fire window
+        /// UTC Start hour for the fire window
         /// </summary>
         public int StartHour { get; set; }
 
         /// <summary>
-        /// End hour for the fire window
+        /// UTC End hour for the fire window
         /// </summary>
         public int? EndHour { get; set; }
 
         /// <summary>
         /// Creates a Daily Fire Window
         /// </summary>
-        /// <param name="StartHour">Hour for the window to start</param>
-        /// <param name="EndHour">Hour for the window to end</param>
+        /// <param name="StartHour">UTC Hour for the window to start</param>
+        /// <param name="EndHour">UTC Hour for the window to end</param>
         public DailyFireWindow(int StartHour, int? EndHour)
         {
             this.StartHour = StartHour;
@@ -381,15 +381,20 @@ namespace Castle.Components.Scheduler
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="startDateUtc">Date for the trigger to start firing</param>
-        /// <param name="endDateUtc">Date for the trigger to stop firing</param>
-        /// <param name="dailyFireWindow"></param>
-        /// <param name="period"></param>
-        /// <param name="jobExecutionCount"></param>
+        /// <param name="startDateUtc">The UTC date for the trigger to start firing</param>
+        /// <param name="endDateUtc">The UTC date for the trigger to stop firing</param>
+        /// <param name="dailyFireWindow">Specifies the UTC hours when the trigger should fire</param>
+        /// <param name="period">The recurrence period of the trigger.
+        /// If the period is set to null, the trigger will fire exactly once
+        /// and never recur.</param>
+        /// <param name="jobExecutionCount">The number of job executions remaining before the trigger
+        /// stops firing.  This number is decremented each time the job executes
+        /// until it reaches zero.  If the count is set to null, the number of times the job
+        /// may execute is unlimited.</param>
         public DailyPeriodicWindowTrigger(DateTime startDateUtc, DateTime? endDateUtc, DailyFireWindow dailyFireWindow, TimeSpan? period, int? jobExecutionCount)
             : base(startDateUtc, endDateUtc, period, jobExecutionCount)
         {
-            this.DailyFireWindow = dailyFireWindow;
+            DailyFireWindow = dailyFireWindow;
         }
 
         /// <summary>
@@ -403,8 +408,8 @@ namespace Castle.Components.Scheduler
         /// <returns></returns>
         public override Trigger Clone()
         {
-            DailyFireWindow dailyFireWindow = new DailyFireWindow(this.DailyFireWindow.StartHour, this.DailyFireWindow.EndHour);
-            DailyPeriodicWindowTrigger clone = new DailyPeriodicWindowTrigger(startTimeUtc, endTimeUtc, dailyFireWindow, period, jobExecutionCountRemaining)
+            var dailyFireWindow = new DailyFireWindow(DailyFireWindow.StartHour, DailyFireWindow.EndHour);
+            var clone = new DailyPeriodicWindowTrigger(startTimeUtc, endTimeUtc, dailyFireWindow, period, jobExecutionCountRemaining)
                                                    {
                                                        nextFireTimeUtc = nextFireTimeUtc,
                                                        misfireThreshold = misfireThreshold,
@@ -431,8 +436,8 @@ namespace Castle.Components.Scheduler
 
         private bool InDailyFireWindow(DateTime timeBasisUtc)
         {
-            if (this.DailyFireWindow.StartHour <= timeBasisUtc.Hour &&
-                this.DailyFireWindow.EndHour.HasValue && this.DailyFireWindow.EndHour >= timeBasisUtc.Hour)
+            if (DailyFireWindow.StartHour <= timeBasisUtc.Hour &&
+                DailyFireWindow.EndHour.HasValue && DailyFireWindow.EndHour > timeBasisUtc.Hour)
                 return true;
 
             return false;
@@ -452,9 +457,6 @@ namespace Castle.Components.Scheduler
         {
             return endTimeUtc.HasValue && timeBasisUtc.Date > endTimeUtc.Value.Date;
         }
-
-
-
 
         private TriggerScheduleAction StopAction()
         {
