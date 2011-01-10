@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Castle.Components.Scheduler
 {
 	using System;
@@ -32,16 +35,16 @@ namespace Castle.Components.Scheduler
 		/// </summary>
 		public const TriggerScheduleAction DefaultMisfireAction = TriggerScheduleAction.Skip;
 
-		private DateTime startTimeUtc;
-		private DateTime? endTimeUtc;
-		private TimeSpan? period;
-		private int? jobExecutionCountRemaining;
-		private bool isFirstTime;
+	    internal DateTime startTimeUtc;
+	    internal DateTime? endTimeUtc;
+	    internal TimeSpan? period;
+	    internal int? jobExecutionCountRemaining;
+	    internal bool isFirstTime;
 
-		private TimeSpan? misfireThreshold;
-		private TriggerScheduleAction misfireAction;
+	    internal TimeSpan? misfireThreshold;
+	    internal TriggerScheduleAction misfireAction;
 
-		private DateTime? nextFireTimeUtc;
+	    internal DateTime? nextFireTimeUtc;
 
 		/// <summary>
 		/// Creates a periodic trigger.
@@ -268,7 +271,7 @@ namespace Castle.Components.Scheduler
 			}
 		}
 
-		private TriggerScheduleAction ScheduleSuggestedAction(TriggerScheduleAction action, DateTime timeBasisUtc)
+		internal virtual TriggerScheduleAction ScheduleSuggestedAction(TriggerScheduleAction action, DateTime timeBasisUtc)
 		{
 			switch (action)
 			{
@@ -337,4 +340,142 @@ namespace Castle.Components.Scheduler
 			return TriggerScheduleAction.Stop;
 		}
 	}
+
+
+
+    /// <summary>
+    /// Daily Fire Window
+    /// </summary>
+    public class DailyFireWindow
+    {
+        /// <summary>
+        /// Start hour for the fire window
+        /// </summary>
+        public int StartHour { get; set; }
+
+        /// <summary>
+        /// End hour for the fire window
+        /// </summary>
+        public int? EndHour { get; set; }
+
+        /// <summary>
+        /// Creates a Daily Fire Window
+        /// </summary>
+        /// <param name="StartHour">Hour for the window to start</param>
+        /// <param name="EndHour">Hour for the window to end</param>
+        public DailyFireWindow(int StartHour, int? EndHour)
+        {
+            this.StartHour = StartHour;
+            this.EndHour = EndHour;
+        }
+    }
+
+
+
+    /// <summary>
+    /// something goes here...
+    /// </summary>
+    public class DailyPeriodicWindowTrigger : PeriodicTrigger
+    {
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="startDateUtc">Date for the trigger to start firing</param>
+        /// <param name="endDateUtc">Date for the trigger to stop firing</param>
+        /// <param name="dailyFireWindow"></param>
+        /// <param name="period"></param>
+        /// <param name="jobExecutionCount"></param>
+        public DailyPeriodicWindowTrigger(DateTime startDateUtc, DateTime? endDateUtc, DailyFireWindow dailyFireWindow, TimeSpan? period, int? jobExecutionCount)
+            : base(startDateUtc, endDateUtc, period, jobExecutionCount)
+        {
+            this.DailyFireWindow = dailyFireWindow;
+        }
+
+        /// <summary>
+        /// The Daily Fire Window for the trigger
+        /// </summary>
+        public DailyFireWindow DailyFireWindow { get; set; }
+
+        /// <summary>
+        /// Makes a deep clone of the trigger
+        /// </summary>
+        /// <returns></returns>
+        public override Trigger Clone()
+        {
+            DailyFireWindow dailyFireWindow = new DailyFireWindow(this.DailyFireWindow.StartHour, this.DailyFireWindow.EndHour);
+            DailyPeriodicWindowTrigger clone = new DailyPeriodicWindowTrigger(startTimeUtc, endTimeUtc, dailyFireWindow, period, jobExecutionCountRemaining)
+                                                   {
+                                                       nextFireTimeUtc = nextFireTimeUtc,
+                                                       misfireThreshold = misfireThreshold,
+                                                       misfireAction = misfireAction,
+                                                       isFirstTime = isFirstTime
+                                                   };
+
+            return clone;
+        }
+
+        internal override TriggerScheduleAction ScheduleSuggestedAction(TriggerScheduleAction action, DateTime timeBasisUtc)
+        {
+            if (action != TriggerScheduleAction.ExecuteJob)
+                return base.ScheduleSuggestedAction(action, timeBasisUtc);
+            
+            if (CannotExecuteAgain() || EndTimeHasPassed(timeBasisUtc))
+                return StopAction();
+
+            if (!StartTimeHasPassed(timeBasisUtc) || !InDailyFireWindow(timeBasisUtc))
+                return SkipAction();
+
+            return ExecuteAction();
+        }
+
+        private bool InDailyFireWindow(DateTime timeBasisUtc)
+        {
+            if (this.DailyFireWindow.StartHour <= timeBasisUtc.Hour &&
+                this.DailyFireWindow.EndHour.HasValue && this.DailyFireWindow.EndHour >= timeBasisUtc.Hour)
+                return true;
+
+            return false;
+        }
+
+        private bool CannotExecuteAgain()
+        {
+            return jobExecutionCountRemaining.HasValue && jobExecutionCountRemaining.Value <= 0;
+        }        
+
+        private bool StartTimeHasPassed(DateTime timeBasisUtc)
+        {
+            return timeBasisUtc.Date >= startTimeUtc.Date;
+        }
+
+        private bool EndTimeHasPassed(DateTime timeBasisUtc)
+        {
+            return endTimeUtc.HasValue && timeBasisUtc.Date > endTimeUtc.Value.Date;
+        }
+
+
+
+
+        private TriggerScheduleAction StopAction()
+        {
+            nextFireTimeUtc = null;
+            jobExecutionCountRemaining = 0;
+            return TriggerScheduleAction.Stop;
+        }
+
+        private TriggerScheduleAction ExecuteAction()
+        {
+            nextFireTimeUtc = null;
+            jobExecutionCountRemaining -= 1;
+            return TriggerScheduleAction.ExecuteJob;
+        }
+
+        private TriggerScheduleAction SkipAction()
+        {
+            nextFireTimeUtc = startTimeUtc;
+            return TriggerScheduleAction.Skip;
+        }
+
+
+    }
 }

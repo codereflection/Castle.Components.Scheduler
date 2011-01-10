@@ -377,4 +377,85 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
 			trigger.Schedule((TriggerScheduleCondition) 9999, DateTime.UtcNow, null);
 		}
 	}
+
+    [TestFixture]
+    public class DailyPeriodicTriggerTest : BaseUnitTest
+    {
+        [Test]
+        public void ConstructorSetsProperties()
+        {
+            DailyFireWindow window = new DailyFireWindow(3, 13);
+            TimeSpan? interval = new TimeSpan(0, 1, 45);
+            DailyPeriodicWindowTrigger trigger = new DailyPeriodicWindowTrigger(new DateTime(2000, 3, 14), new DateTime(2001, 3, 14), window, interval, 33);
+
+            DateTimeAssert.AreEqualIncludingKind(new DateTime(2000, 3, 14, 0, 0, 0, DateTimeKind.Utc),
+                                                 trigger.StartTimeUtc);
+            Assert.AreEqual(interval, trigger.Period);
+            Assert.AreEqual(DailyPeriodicWindowTrigger.DefaultMisfireAction, trigger.MisfireAction);
+            Assert.AreEqual(null, trigger.MisfireThreshold);
+
+            DateTimeAssert.AreEqualIncludingKind(new DateTime(2001, 3, 14, 0,0,0, DateTimeKind.Utc), trigger.EndTimeUtc);
+            Assert.AreEqual(33, trigger.JobExecutionCountRemaining);
+            Assert.IsTrue(trigger.IsFirstTime);
+
+            Assert.AreEqual(3, trigger.DailyFireWindow.StartHour);
+            Assert.AreEqual(13, trigger.DailyFireWindow.EndHour);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ClonePerformsADeepCopy(bool useGenericClonable)
+        {
+            DateTime now = DateTime.UtcNow;
+            DailyFireWindow window = new DailyFireWindow(3, 13);
+            DailyPeriodicWindowTrigger trigger = new DailyPeriodicWindowTrigger(now, DateTime.MaxValue, window, TimeSpan.MaxValue, 42);
+            trigger.MisfireAction = TriggerScheduleAction.DeleteJob;
+            trigger.MisfireThreshold = TimeSpan.MaxValue;
+            trigger.Schedule(TriggerScheduleCondition.Latch, now, null);
+
+            DailyPeriodicWindowTrigger clone = useGenericClonable
+                                        ? (DailyPeriodicWindowTrigger)trigger.Clone()
+                                        : (DailyPeriodicWindowTrigger)((ICloneable)trigger).Clone();
+
+            Assert.AreNotSame(trigger, clone);
+
+            Assert.AreEqual(trigger.StartTimeUtc, clone.StartTimeUtc);
+            Assert.AreEqual(trigger.EndTimeUtc, clone.EndTimeUtc);
+            Assert.AreEqual(trigger.Period, clone.Period);
+            Assert.AreEqual(trigger.JobExecutionCountRemaining, clone.JobExecutionCountRemaining);
+            Assert.AreEqual(trigger.MisfireAction, clone.MisfireAction);
+            Assert.AreEqual(trigger.MisfireThreshold, clone.MisfireThreshold);
+            Assert.AreEqual(trigger.IsFirstTime, clone.IsFirstTime);
+
+            Assert.AreEqual(trigger.IsActive, clone.IsActive);
+            Assert.AreEqual(trigger.NextFireTimeUtc, clone.NextFireTimeUtc);
+            Assert.AreEqual(trigger.NextMisfireThreshold, clone.NextMisfireThreshold);
+
+            Assert.AreEqual(trigger.DailyFireWindow.StartHour, clone.DailyFireWindow.StartHour);
+            Assert.AreEqual(trigger.DailyFireWindow.EndHour, clone.DailyFireWindow.EndHour);
+        }
+
+        [TestCase("3/14/2000 03:00:00 AM", TriggerScheduleAction.ExecuteJob, 32, Description = "At the start of the fire window")]
+        [TestCase("3/14/2000 01:59:59 PM", TriggerScheduleAction.ExecuteJob, 32, Description = "At the end of the fire window")]
+        [TestCase("3/14/2000 02:59:59 AM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window")]
+        [TestCase("3/14/2000 02:00:00 PM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window")]
+        [TestCase("3/13/2000 03:00:00 AM", TriggerScheduleAction.Skip, 33, Description = "In fire window, but before starting date")]
+        [TestCase("3/15/2001 03:00:00 AM", TriggerScheduleAction.Stop, 0, Description = "In fire window, but after ending date")]
+        [TestCase("3/14/2001 03:00:00 AM", TriggerScheduleAction.ExecuteJob, 32, Description = "In fire window, on final fire date")]
+        public void Schedule(string utcFireTime, TriggerScheduleAction expectedAction, int expectedRemainingJobCount)
+        {
+            var startDate = new DateTime(2000, 3, 14);
+            DateTime? endDate = new DateTime(2001, 3, 14);
+            var dailyFireWindow = new DailyFireWindow(3, 13);
+            TimeSpan? interval = new TimeSpan(0, 1, 0);
+            int? jobExecutionCount = 33;
+
+            var trigger = new DailyPeriodicWindowTrigger(startDate, endDate, dailyFireWindow, interval, jobExecutionCount);
+
+            var triggerScheduleAction = trigger.Schedule(TriggerScheduleCondition.Fire, DateTime.Parse(utcFireTime), null);
+
+            Assert.AreEqual(expectedAction, triggerScheduleAction);
+            Assert.AreEqual(expectedRemainingJobCount, trigger.JobExecutionCountRemaining);
+        }
+    }
 }
