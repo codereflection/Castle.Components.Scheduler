@@ -438,7 +438,7 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
         [TestCase("3/14/2000 03:00:00 AM", TriggerScheduleAction.ExecuteJob, 32, Description = "At the start of the fire window")]
         [TestCase("3/14/2000 12:59:59 PM", TriggerScheduleAction.ExecuteJob, 32, Description = "At the end of the fire window")]
         [TestCase("3/14/2000 02:59:59 AM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window, right before start of fire window")]
-        [TestCase("3/14/2000 01:00:00 PM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window, right after end of fire window")]
+        [TestCase("3/14/2000 04:00:00 PM", TriggerScheduleAction.Skip, 33, Description = "Out of fire window, right after end of fire window")]
         [TestCase("3/13/2000 03:00:00 AM", TriggerScheduleAction.Skip, 33, Description = "In fire window, but before starting date")]
         [TestCase("3/15/2001 03:00:00 AM", TriggerScheduleAction.Stop, 0, Description = "In fire window, but after ending date")]
         [TestCase("3/14/2001 03:00:00 AM", TriggerScheduleAction.ExecuteJob, 32, Description = "In fire window, on final fire date and start hour")]
@@ -447,7 +447,7 @@ namespace Castle.Components.Scheduler.Tests.UnitTests
         {
             var startDate = new DateTime(2000, 3, 14);
             DateTime? endDate = new DateTime(2001, 3, 14);
-            var dailyFireWindow = new DailyFireWindow(3, 13);
+            var dailyFireWindow = new DailyFireWindow(3, 16);
             TimeSpan? interval = new TimeSpan(0, 1, 0);
             int? jobExecutionCount = 33;
 

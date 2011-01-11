@@ -436,8 +436,20 @@ namespace Castle.Components.Scheduler
 
         private bool InDailyFireWindow(DateTime timeBasisUtc)
         {
-            if (DailyFireWindow.StartHour <= timeBasisUtc.Hour &&
-                DailyFireWindow.EndHour.HasValue && DailyFireWindow.EndHour > timeBasisUtc.Hour)
+            var startWindow = timeBasisUtc.Date;
+            startWindow = startWindow.AddHours(DailyFireWindow.StartHour);
+
+            var endWindow = timeBasisUtc.Date;
+            if (DailyFireWindow.EndHour.HasValue)
+            {
+                if (DailyFireWindow.EndHour >= DailyFireWindow.StartHour)
+                    endWindow = endWindow.AddHours(DailyFireWindow.EndHour.Value);
+                else
+                    endWindow = endWindow.AddDays(1).AddHours(DailyFireWindow.EndHour.Value);
+            }
+
+            if (startWindow <= timeBasisUtc &&
+                DailyFireWindow.EndHour.HasValue && endWindow > timeBasisUtc)
                 return true;
 
             return false;
